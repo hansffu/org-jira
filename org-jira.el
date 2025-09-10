@@ -1112,6 +1112,15 @@ ORG-JIRA-PROJ-KEY-OVERRIDE being set before and after running."
     (unless (looking-at top-heading)
       (insert (format "\n* %s-Tickets\n" proj-key)))))
 
+(defun org-jira--html-to-text (html)
+  "Convert HTML string to plain text using libxml and shr."
+  (let ((dom (with-temp-buffer
+               (insert html)
+               (libxml-parse-html-region (point-min) (point-max)))))
+    (with-temp-buffer
+      (shr-insert-document dom)
+      (buffer-string))))
+
 (defun org-jira--render-issue (Issue)
   "Render single ISSUE."
 ;;  (org-jira-log "Rendering issue from issue list")
@@ -1192,7 +1201,8 @@ ORG-JIRA-PROJ-KEY-OVERRIDE being set before and after running."
                                                    (org-jira-insert
                                                     (replace-regexp-in-string
                                                      "^" "  "
-                                                     (format "%s" (slot-value Issue heading-entry)))))))
+                                                     (org-jira--html-to-text
+                                                      (format "%s" (slot-value Issue heading-entry))))))))
              '(description))
 
             (when org-jira-download-comments
